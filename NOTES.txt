@@ -1,0 +1,125 @@
+NOTLARIM - staj kodu hakkinda
+================================
+
+Bu klasor TUBITAK 2247-C staj raporum icin yazdigim kodlari iceriyor.
+Asagida hangi dosyanin ne ise yaradigini ve calisirken karsilastigim
+sorunlari not aldim, ilerde lazim olur diye.
+
+
+DOSYALAR
+--------
+
+model.py
+    Noron populasyonu (MPR modeli) ile astrosit kalsiyum modelini
+    (Li-Rinzel) birlestiren denklemler burada. get_params() fonksiyonu
+    tum sayisal degerleri (parametreleri) donduruyor, boylece tek yerden
+    degistirebiliyorum.
+
+rk4_cozucu.py
+    Diferansiyel denklem cozucu (RK4 yontemi). Hocam Euler yerine RK4
+    kullanmami soyledi, daha dogru sonuc veriyormus. Gecikme (tau_d)
+    varsa gecmisteki r degerini bir diziden okuyorum.
+
+denge_noktasi.py
+    Sistemin "durgun" haline (denge noktasi) bakiyor ve bu noktanin
+    kararli olup olmadigini (kucuk bir bozulma verilirse eski haline
+    donuyor mu, yoksa uzaklasiyor mu) kontrol ediyor.
+
+dt_yakinsama_testi.py
+    Zaman adimini (dt) kucultunce sonucun ne kadar degistigine bakiyor.
+    RK4 "4. derece" oldugu icin dt yariya inince hata ~16 kat kuculmesi
+    lazim, bunu grafikte kontrol ettim.
+
+spektral_analiz.py
+    r(t) sinyalinin hangi frekanslarda salindigina bakiyor (gama bandi
+    30-100 Hz araligini kontrol ediyorum).
+
+gecikme_taramasi.py
+    Sinaptik gecikmeyi (tau_d) yavas yavas arttirip hangi noktada
+    salinimin basladigini (Hopf catallanmasi) buluyor, sonra frekansin
+    gecikmeyle nasil degistigine bakiyor.
+
+rejim_haritasi.py
+    Iki parametreyi (eta ve tau_d) ayni anda degistirip sistemin farkli
+    "rejimlere" (sabit nokta / periyodik / karisik) girip girmedigini
+    inceliyor. Ayrica Lyapunov usteli hesaplayarak kaos olup olmadigina
+    bakiyor (Benettin yontemi).
+
+calistir_hepsi.py
+    Hepsini sirayla calistirip grafikleri figs/ klasorune kaydediyor.
+
+
+NASIL CALISTIRILIR
+-------------------
+Once gerekli paketleri kurmak lazim (bende zaten yukluydu):
+
+    pip install numpy scipy matplotlib
+
+Sonra:
+
+    python calistir_hepsi.py
+
+rejim_haritasi.py biraz uzun suruyor (5 dakika civari), o yuzden
+calistir_hepsi.py'yi calistirinca sabirli olmak lazim. Istersen
+dosyalari tek tek de calistirabilirsin (orn: python denge_noktasi.py).
+
+
+KARSILASTIGIM SORUNLAR VE NASIL COZDUM
+----------------------------------------
+
+1) Birim sorunu (ms / saniye)
+   Li-Rinzel astrosit modelinin parametreleri saniye (s) cinsinden
+   verilmis ama ben tum simulasyonu milisaniye (ms) ile yapiyorum.
+   Ilk basta bunu farketmeyip astrositi ya cok hizli ya da cok yavas
+   calistirmisim. model.py icinde /1000 ile carpip duzelttim (Li-Rinzel
+   denklemlerinin oldugu yerde yorum olarak yazdim).
+
+2) Denge noktasi bulurken fiziksel olmayan sonuc cikmasi
+   fsolve fonksiyonuna rastgele bir baslangic degeri verince bazen
+   negatif kalsiyum (Ca<0) gibi anlamsiz bir sonuc buluyordu (matematiksel
+   olarak dogru ama fizik olarak sacma). Birkac deneme sonrasi iyi bir
+   baslangic noktasi buldum, denge_noktasi.py icinde onu kullaniyorum.
+
+3) RK4'un dt-yakinsama testinde beklenen sonucu (derece~4) alamamistim
+   Ilk denemede hatalar cok kucuktu ve duzgun bir egilim gormuyordum.
+   Sonra farkettim ki sistem zaten "durgun" hale gelmisti (200 ms sonra
+   pek bir sey degismiyor), o yuzden hata zaten kucuktu ve anlamli bir
+   karsilastirma yapamiyordum. Simulasyon suresini kisalttim (30 ms,
+   sistem hala hareket halindeyken), boylece duzgun derece~4 sonucu
+   cikti.
+
+4) Gecikmeli sistemde RK4'un ic adimlarinda bir hata vardi
+   Gecikme olmadigi (tau_d=0) durumda bile, RK4'un ara adimlarinda
+   (k2, k3, k4 hesaplanirken) yanlislikla hep ayni (eski) r degerini
+   kullaniyordum, oysa her ara adimda r'nin GUNCEL degerini kullanmam
+   lazimdi. Bu da RK4'un dogrulugunu bozuyordu. Duzelttikten sonra
+   dt-yakinsama testinde tam beklenen sonucu (derece~4) aldim.
+
+5) rejim_haritasi.py'de bazi noktalar yanlis etiketleniyordu
+   Cok sivri/keskin ates etme (bursting) rejimlerinde RK4 bazen sayisal
+   olarak patliyor (NaN cikiyor). Ben de farketmeden bu durumu "sabit
+   nokta" olarak etiketlemistim, cunku NaN ile karsilastirma yapinca
+   Python hep False donduruyor ve bos bir liste geliyor. Simdi once
+   NaN kontrolu yapiyorum, oyle bir durum varsa "IRAKSADI" diye ayri
+   etiketliyorum (haritada kirmizi renkte gorunuyor).
+
+6) Lyapunov hesabinda bazi degerler cok buyuk cikiyor (orn tau_d=8'de)
+   Bunu tam cozemedim ama sebebini anladim: astrosit kismi cok yavas
+   bir zaman olcegine sahip (~7000 ms), yani sistem gercekten "oturmus"
+   haline gelmesi icin cok uzun surmesi lazim. Kisa sureli simulasyon
+   kullaninca sistem hala gecici (transient) durumdayken olcum yapmis
+   oluyorum ve bu yanlis buyuk bir Lyapunov degeri veriyor. Daha uzun
+   simulasyon suresi (t_max, transient) kullanarak duzeltilebilir ama
+   o zaman kod cok uzun surede calisiyor, ben simdilik boyle biraktim,
+   raporda bunu bir sinirlama olarak belirttim.
+
+
+PARAMETRELER HAKKINDA NOT
+---------------------------
+model.py icindeki eta, J0, k_M gibi degerleri ben rastgele degil, biraz
+tarama yaparak (farkli degerler deneyip denge noktasinin ozdegerlerine
+bakarak) sectim - amac sistemin gecikme eklenince salinima gecebilecegi
+("zayif sonumlu" - yani neredeyse salinim yapacak ama yapmayan) bir
+noktada olmasiydi. Kendi raporumdaki tam sayisal degerlerle (varsa)
+karsilastirmak icin bu parametreleri degistirip denge_noktasi.py'yi
+tekrar calistirmak yeterli.
