@@ -1,8 +1,5 @@
 TUBITAK-2247-C-Project
 
-Developed under the TÜBİTAK 2247-C STAR, this project models complex neural dynamics using mean-field theory and numerical ODE integration. Featuring Numba-optimized Python for high-performance simulation, it analyzes system stability, bifurcation points, and chaotic behavior in neural populations. Efficient, scalable, and research-focused.
-Neural Dynamics Simulation - TÜBİTAK 2247-C STAR Project
-
 1. Project Overview
 
 This repository hosts the computational research conducted under the TÜBİTAK 2247-C STAR Fellowship. The study focuses on the mathematical modeling of complex neural dynamics, specifically investigating how large-scale brain oscillations emerge from the interplay of individual neural population interactions. By utilizing mean-field theory, the project creates a bridge between theoretical neuroscience and high-performance numerical simulation.
